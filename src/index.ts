@@ -1,4 +1,5 @@
 import { generateToken } from 'authenticator';
+import { setTimeout } from 'node:timers/promises';
 import { ElementHandle, Page } from 'puppeteer';
 
 export interface Logger {

@@ -17,12 +17,15 @@
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.1",
+    "@types/authenticator": "^1.1.4",
     "prettier": "^3.4.2",
     "typescript": "^5.7.3"
   },
   "scripts": {
+    "build": "tsc",
     "check": "prettier . --check",
     "format": "prettier . --check --write",
+    "prepublish": "tsc",
     "test": "echo"
   }
 }

@@ -1,18 +1,13 @@
 {
   "compilerOptions": {
-    "lib": ["es2022"],
+    "target": "esnext",
     "module": "esnext",
-    "target": "es2022",
-    "strict": false,
-    "esModuleInterop": true,
     "declaration": true,
-    "outDir": "dist",
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "esModuleInterop": true,
     "moduleResolution": "node",
-    "resolveJsonModule": true
+    "outDir": "dist"
   },
-  "include": ["./src/**/*"],
-  "exclude": ["node_modules", "dist"],
-  "ts-node": { "esm": true }
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
 }
