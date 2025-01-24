@@ -6,7 +6,7 @@ export interface Logger {
   info(message: string): void;
 }
 
-async function authenticate(
+export async function authenticate(
   page: Page,
   email: string,
   password: string,
