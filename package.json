@@ -1,0 +1,24 @@
+{
+  "name": "@thetypefounders/continue-with-google",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "author": "Ivan Ukhov <ivan.ukhov@gmail.com>",
+  "description": "Two-factor authentication with Google via Puppeteer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/the-type-founders/continue-with-google.git"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.1",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  },
+  "scripts": {
+    "check": "prettier . --check",
+    "format": "prettier . --check --write",
+    "test": "echo"
+  }
+}
