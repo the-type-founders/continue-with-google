@@ -11,9 +11,10 @@ npm install @thetypefounders/continue-with-google --save
 ## Usage
 
 ```javascript
-import authenticate from '@thetypefounders/continue-with-google';
+import { authenticate } from '@thetypefounders/continue-with-google';
+import puppeteer from 'puppeteer';
 
-const browser = await Puppeteer.launch();
+const browser = await puppeteer.launch();
 const page = await browser.newPage();
 
 // Go to a page that supports Google.
