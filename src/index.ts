@@ -1,6 +1,6 @@
 import { generateToken } from 'authenticator';
 import { setTimeout } from 'node:timers/promises';
-import { type ElementHandle, Page } from 'puppeteer';
+import { type ElementHandle, Page, WaitForSelectorOptions } from 'puppeteer';
 
 export interface Logger {
   info(message: string): void;
@@ -11,6 +11,7 @@ export type Options = {
   challengeTimeoutSeconds?: number;
   trialCount?: number;
   trialTimeoutSeconds?: number;
+  waitForSelector?: WaitForSelectorOptions;
 };
 
 const DEFAULTS: Options = {
@@ -70,7 +71,7 @@ export async function authenticate(
       );
     }
     found = await Promise.any([
-      page.waitForSelector(selector).then(() => true),
+      page.waitForSelector(selector, options.waitForSelector).then(() => true),
       page
         .waitForSelector('input[type=tel]', { visible: true })
         .then(() => false),
