@@ -4,6 +4,7 @@ import { type ElementHandle, Page, WaitForSelectorOptions } from 'puppeteer';
 
 export interface Logger {
   info(message: string): void;
+  warn(message: string): void;
 }
 
 export type Options = {
@@ -102,6 +103,8 @@ async function waitForTrial(
     if (future) {
       previous = current;
       current = future;
+    } else {
+      logger.warn(`Failed to take a screenshot.`);
     }
   }
 }
