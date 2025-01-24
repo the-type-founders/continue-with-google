@@ -11,9 +11,9 @@ npm install @thetypefounders/continue-with-google --save
 ## Usage
 
 ```javascript
+import { authenticate } from '@thetypefounders/continue-with-google';
 import Puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { authenticate } from '@thetypefounders/continue-with-google';
 
 Puppeteer.use(StealthPlugin());
 

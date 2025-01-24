@@ -6,15 +6,28 @@ export interface Logger {
   info(message: string): void;
 }
 
+export type Options = {
+  challengeCount?: number;
+  challengeTimeoutSeconds?: number;
+  trialCount?: number;
+  trialTimeoutSeconds?: number;
+};
+
+const DEFAULTS: Options = {
+  challengeCount: 3,
+  challengeTimeoutSeconds: 30,
+  trialCount: 10,
+  trialTimeoutSeconds: 2,
+};
+
 export async function authenticate(
   page: Page,
   email: string,
   password: string,
   secret: string,
-  target: string,
-  logger: Logger = console,
-  attemptCount: number = 3,
-  attemptSeconds: number = 30
+  selector: string,
+  options: Options = DEFAULTS,
+  logger: Logger = console
 ): Promise<ElementHandle | null> {
   logger.info('Waiting to enter the email...');
   await page.waitForSelector('input[type=email]', { visible: true });
@@ -30,13 +43,17 @@ export async function authenticate(
 
   for (
     let attempt = 0, found = false;
-    attempt < attemptCount && !found;
+    attempt < (options.challengeCount || DEFAULTS.challengeCount!) && !found;
     attempt++
   ) {
     if (attempt > 0) {
       logger.info(`Challenged on attempt ${attempt}. Entering the code...`);
       if (attempt > 1) {
-        await setTimeout(1000 * attemptSeconds);
+        await setTimeout(
+          1000 *
+            (options.challengeTimeoutSeconds ||
+              DEFAULTS.challengeTimeoutSeconds!)
+        );
       }
       const code = generateToken(secret);
       await page.evaluate(() => {
@@ -45,24 +62,29 @@ export async function authenticate(
       });
       await page.type('input[type=tel]', code);
       await page.keyboard.press('Enter');
-      await waitForPeace(page, logger);
+      await waitForTrial(
+        page,
+        options.trialCount || DEFAULTS.trialCount!,
+        options.trialTimeoutSeconds || DEFAULTS.trialTimeoutSeconds!,
+        logger
+      );
     }
     found = await Promise.any([
-      page.waitForSelector(target).then(() => true),
+      page.waitForSelector(selector).then(() => true),
       page
         .waitForSelector('input[type=tel]', { visible: true })
         .then(() => false),
     ]);
   }
 
-  return await page.$(target);
+  return await page.$(selector);
 }
 
-async function waitForPeace(
+async function waitForTrial(
   page: Page,
-  logger: Logger,
-  attemptCount: number = 10,
-  attemptSeconds: number = 2
+  attemptCount: number,
+  attemptTimeoutSeconds: number,
+  logger: Logger
 ): Promise<void> {
   for (
     let attempt = -1, previous = undefined, current = undefined;
@@ -70,10 +92,10 @@ async function waitForPeace(
     attempt++
   ) {
     if (attempt > 0) {
-      logger.info(`Changed on attempt ${attempt}. Taking a screenshot...`);
+      logger.info(`Tried on attempt ${attempt}. Taking a screenshot...`);
     }
     if (attempt > -1) {
-      await setTimeout(1000 * attemptSeconds);
+      await setTimeout(1000 * attemptTimeoutSeconds);
     }
     const future = await screenshot(page);
     if (future) {
