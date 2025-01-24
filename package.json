@@ -11,6 +11,10 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "dependencies": {
+    "authenticator": "^1.1.5",
+    "puppeteer": "^24.1.1"
+  },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.1",
     "prettier": "^3.4.2",
