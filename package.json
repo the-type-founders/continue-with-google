@@ -1,6 +1,6 @@
 {
   "name": "@thetypefounders/continue-with-google",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "license": "Apache-2.0",
   "author": "Ivan Ukhov <ivan.ukhov@gmail.com>",
   "description": "Two-factor authentication with Google via Puppeteer",

@@ -49,7 +49,7 @@ export async function authenticate(
     attempt++
   ) {
     if (attempt > 0) {
-      logger.info(`Challenged on attempt ${attempt}. Entering the code...`);
+      logger.warn(`Challenged on attempt ${attempt}. Entering the code...`);
       if (attempt > 1) {
         await setTimeout(
           1000 *
@@ -94,7 +94,7 @@ async function waitForTrial(
     attempt++
   ) {
     if (attempt > 0) {
-      logger.info(`Tried on attempt ${attempt}. Taking a screenshot...`);
+      logger.warn(`Tried on attempt ${attempt}. Waiting to finish...`);
     }
     if (attempt > -1) {
       await setTimeout(1000 * attemptTimeoutSeconds);
@@ -103,8 +103,6 @@ async function waitForTrial(
     if (future) {
       previous = current;
       current = future;
-    } else {
-      logger.warn(`Failed to take a screenshot.`);
     }
   }
 }
