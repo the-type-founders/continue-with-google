@@ -10,16 +10,20 @@ export interface Logger {
 export type Options = {
   challengeCount?: number;
   challengeTimeoutSeconds?: number;
+  challengeScreenshot?: boolean;
   trialCount?: number;
   trialTimeoutSeconds?: number;
+  trialScreenshot?: boolean;
   waitForSelector?: WaitForSelectorOptions;
 };
 
 const DEFAULTS: Options = {
   challengeCount: 3,
   challengeTimeoutSeconds: 30,
+  challengeScreenshot: false,
   trialCount: 10,
   trialTimeoutSeconds: 2,
+  trialScreenshot: false,
 };
 
 export async function authenticate(
@@ -50,6 +54,7 @@ export async function authenticate(
   ) {
     if (attempt > 0) {
       logger.warn(`Challenged on attempt ${attempt}. Entering the code...`);
+      if (options.challengeScreenshot) await takeScreenshotToDisplay(page);
       if (attempt > 1) {
         await setTimeout(
           1000 *
@@ -68,6 +73,7 @@ export async function authenticate(
         page,
         options.trialCount || DEFAULTS.trialCount!,
         options.trialTimeoutSeconds || DEFAULTS.trialTimeoutSeconds!,
+        options.trialScreenshot || DEFAULTS.trialScreenshot!,
         logger
       );
     }
@@ -86,6 +92,7 @@ async function waitForTrial(
   page: Page,
   attemptCount: number,
   attemptTimeoutSeconds: number,
+  attemptScreenshot: boolean,
   logger: Logger
 ): Promise<void> {
   for (
@@ -95,11 +102,12 @@ async function waitForTrial(
   ) {
     if (attempt > 0) {
       logger.warn(`Tried on attempt ${attempt}. Waiting to finish...`);
+      if (attemptScreenshot) await takeScreenshotToDisplay(page);
     }
     if (attempt > -1) {
       await setTimeout(1000 * attemptTimeoutSeconds);
     }
-    const future = await screenshot(page);
+    const future = await takeScreenshotToCompare(page);
     if (future) {
       previous = current;
       current = future;
@@ -107,7 +115,9 @@ async function waitForTrial(
   }
 }
 
-async function screenshot(page: Page): Promise<string | undefined> {
+async function takeScreenshotToCompare(
+  page: Page
+): Promise<string | undefined> {
   try {
     const content = '* { caret-color: transparent !important; }';
     await page.addStyleTag({ content });
@@ -115,4 +125,10 @@ async function screenshot(page: Page): Promise<string | undefined> {
   } catch {
     return undefined;
   }
+}
+
+async function takeScreenshotToDisplay(page: Page): Promise<void> {
+  await page.screenshot({
+    path: `continue-with-google-${new Date(Date.now()).toISOString()}.png`,
+  });
 }
