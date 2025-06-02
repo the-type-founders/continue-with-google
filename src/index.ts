@@ -10,20 +10,18 @@ export interface Logger {
 export type Options = {
   challengeCount?: number;
   challengeTimeoutSeconds?: number;
-  challengeScreenshot?: boolean;
   trialCount?: number;
   trialTimeoutSeconds?: number;
-  trialScreenshot?: boolean;
   waitForSelector?: WaitForSelectorOptions;
+  screenshot?: boolean;
 };
 
 const DEFAULTS: Options = {
   challengeCount: 3,
   challengeTimeoutSeconds: 30,
-  challengeScreenshot: false,
   trialCount: 10,
   trialTimeoutSeconds: 2,
-  trialScreenshot: false,
+  screenshot: false,
 };
 
 export async function authenticate(
@@ -36,14 +34,20 @@ export async function authenticate(
   logger: Logger = console
 ): Promise<ElementHandle | null> {
   logger.info('Waiting to enter the email...');
+  if (options.screenshot) await takeScreenshotToDisplay(page);
   await page.waitForSelector('input[type=email]', { visible: true });
+
   logger.info('Entering the email...');
+  if (options.screenshot) await takeScreenshotToDisplay(page);
   await page.type('input[type=email]', email);
   await page.keyboard.press('Enter');
 
   logger.info('Waiting to enter the password...');
+  if (options.screenshot) await takeScreenshotToDisplay(page);
   await page.waitForSelector('input[type=password]', { visible: true });
+
   logger.info('Entering the password...');
+  if (options.screenshot) await takeScreenshotToDisplay(page);
   await page.type('input[type=password]', password);
   await page.keyboard.press('Enter');
 
@@ -54,7 +58,7 @@ export async function authenticate(
   ) {
     if (attempt > 0) {
       logger.warn(`Challenged on attempt ${attempt}. Entering the code...`);
-      if (options.challengeScreenshot) await takeScreenshotToDisplay(page);
+      if (options.screenshot) await takeScreenshotToDisplay(page);
       if (attempt > 1) {
         await setTimeout(
           1000 *
@@ -73,7 +77,7 @@ export async function authenticate(
         page,
         options.trialCount || DEFAULTS.trialCount!,
         options.trialTimeoutSeconds || DEFAULTS.trialTimeoutSeconds!,
-        options.trialScreenshot || DEFAULTS.trialScreenshot!,
+        options.screenshot || DEFAULTS.screenshot!,
         logger
       );
     }
@@ -92,7 +96,7 @@ async function waitForTrial(
   page: Page,
   attemptCount: number,
   attemptTimeoutSeconds: number,
-  attemptScreenshot: boolean,
+  screenshot: boolean,
   logger: Logger
 ): Promise<void> {
   for (
@@ -102,7 +106,7 @@ async function waitForTrial(
   ) {
     if (attempt > 0) {
       logger.warn(`Tried on attempt ${attempt}. Waiting to finish...`);
-      if (attemptScreenshot) await takeScreenshotToDisplay(page);
+      if (screenshot) await takeScreenshotToDisplay(page);
     }
     if (attempt > -1) {
       await setTimeout(1000 * attemptTimeoutSeconds);
@@ -129,6 +133,6 @@ async function takeScreenshotToCompare(
 
 async function takeScreenshotToDisplay(page: Page): Promise<void> {
   await page.screenshot({
-    path: `continue-with-google-${new Date(Date.now()).toISOString()}.png`,
+    path: `continue-with-google-${Date.now()}.png`,
   });
 }
