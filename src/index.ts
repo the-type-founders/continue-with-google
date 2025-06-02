@@ -12,8 +12,8 @@ export type Options = {
   challengeTimeoutSeconds?: number;
   trialCount?: number;
   trialTimeoutSeconds?: number;
-  waitForSelector?: WaitForSelectorOptions;
   screenshot?: boolean;
+  waitForSelector?: WaitForSelectorOptions;
 };
 
 const DEFAULTS: Options = {
@@ -21,7 +21,6 @@ const DEFAULTS: Options = {
   challengeTimeoutSeconds: 30,
   trialCount: 10,
   trialTimeoutSeconds: 2,
-  screenshot: false,
 };
 
 export async function authenticate(
@@ -33,38 +32,36 @@ export async function authenticate(
   options: Options = DEFAULTS,
   logger: Logger = console
 ): Promise<ElementHandle | null> {
+  const mergedOptions = { ...DEFAULTS, ...options };
+
   logger.info('Waiting to enter the email...');
-  if (options.screenshot) await takeScreenshotToDisplay(page);
+  if (mergedOptions.screenshot) await takeScreenshotToDisplay(page);
   await page.waitForSelector('input[type=email]', { visible: true });
 
   logger.info('Entering the email...');
-  if (options.screenshot) await takeScreenshotToDisplay(page);
+  if (mergedOptions.screenshot) await takeScreenshotToDisplay(page);
   await page.type('input[type=email]', email);
   await page.keyboard.press('Enter');
 
   logger.info('Waiting to enter the password...');
-  if (options.screenshot) await takeScreenshotToDisplay(page);
+  if (mergedOptions.screenshot) await takeScreenshotToDisplay(page);
   await page.waitForSelector('input[type=password]', { visible: true });
 
   logger.info('Entering the password...');
-  if (options.screenshot) await takeScreenshotToDisplay(page);
+  if (mergedOptions.screenshot) await takeScreenshotToDisplay(page);
   await page.type('input[type=password]', password);
   await page.keyboard.press('Enter');
 
   for (
     let attempt = 0, found = false;
-    attempt < (options.challengeCount || DEFAULTS.challengeCount!) && !found;
+    attempt < mergedOptions.challengeCount! && !found;
     attempt++
   ) {
     if (attempt > 0) {
       logger.warn(`Challenged on attempt ${attempt}. Entering the code...`);
-      if (options.screenshot) await takeScreenshotToDisplay(page);
+      if (mergedOptions.screenshot) await takeScreenshotToDisplay(page);
       if (attempt > 1) {
-        await setTimeout(
-          1000 *
-            (options.challengeTimeoutSeconds ||
-              DEFAULTS.challengeTimeoutSeconds!)
-        );
+        await setTimeout(1000 * mergedOptions.challengeTimeoutSeconds!);
       }
       const code = generateToken(secret);
       await page.evaluate(() => {
@@ -75,14 +72,16 @@ export async function authenticate(
       await page.keyboard.press('Enter');
       await waitForTrial(
         page,
-        options.trialCount || DEFAULTS.trialCount!,
-        options.trialTimeoutSeconds || DEFAULTS.trialTimeoutSeconds!,
-        options.screenshot || DEFAULTS.screenshot!,
+        mergedOptions.trialCount!,
+        mergedOptions.trialTimeoutSeconds!,
+        mergedOptions.screenshot,
         logger
       );
     }
     found = await Promise.any([
-      page.waitForSelector(selector, options.waitForSelector).then(() => true),
+      page
+        .waitForSelector(selector, mergedOptions.waitForSelector)
+        .then(() => true),
       page
         .waitForSelector('input[type=tel]', { visible: true })
         .then(() => false),
@@ -96,7 +95,7 @@ async function waitForTrial(
   page: Page,
   attemptCount: number,
   attemptTimeoutSeconds: number,
-  screenshot: boolean,
+  screenshot: boolean | undefined,
   logger: Logger
 ): Promise<void> {
   for (
