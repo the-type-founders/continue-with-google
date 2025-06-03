@@ -106,7 +106,7 @@ async function showScreenshot(
 ): Promise<void> {
   if (mode === 'log') {
     const content = await takeContent(page, logger);
-    if (content) logger.info(content);
+    if (content) logger.info(`\n${content.split(/\r?\n/).join(' ↵ ')}\n`);
   } else if (mode === 'file') {
     const image = await takeImage(page, logger);
     if (image) await saveImage(image);
