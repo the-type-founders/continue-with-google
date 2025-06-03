@@ -1,4 +1,5 @@
 import { generateToken } from 'authenticator';
+import { writeFile } from 'fs/promises';
 import { setTimeout } from 'node:timers/promises';
 import { type ElementHandle, Page, WaitForSelectorOptions } from 'puppeteer';
 
@@ -12,7 +13,7 @@ export type Options = {
   challengeTimeoutSeconds?: number;
   trialCount?: number;
   trialTimeoutSeconds?: number;
-  screenshot?: boolean | string;
+  screenshot?: string;
   waitForSelector?: WaitForSelectorOptions;
 };
 
@@ -35,20 +36,20 @@ export async function authenticate(
   const mergedOptions = { ...DEFAULTS, ...options };
 
   logger.info('Waiting to enter the email...');
-  await takeScreenshotToDisplay(page, mergedOptions.screenshot, logger);
+  await showScreenshot(page, mergedOptions.screenshot, logger);
   await page.waitForSelector('input[type=email]', { visible: true });
 
   logger.info('Entering the email...');
-  await takeScreenshotToDisplay(page, mergedOptions.screenshot, logger);
+  await showScreenshot(page, mergedOptions.screenshot, logger);
   await page.type('input[type=email]', email);
   await page.keyboard.press('Enter');
 
   logger.info('Waiting to enter the password...');
-  await takeScreenshotToDisplay(page, mergedOptions.screenshot, logger);
+  await showScreenshot(page, mergedOptions.screenshot, logger);
   await page.waitForSelector('input[type=password]', { visible: true });
 
   logger.info('Entering the password...');
-  await takeScreenshotToDisplay(page, mergedOptions.screenshot, logger);
+  await showScreenshot(page, mergedOptions.screenshot, logger);
   await page.type('input[type=password]', password);
   await page.keyboard.press('Enter');
 
@@ -59,7 +60,7 @@ export async function authenticate(
   ) {
     if (attempt > 0) {
       logger.warn(`Challenged on attempt ${attempt}. Entering the code...`);
-      await takeScreenshotToDisplay(page, mergedOptions.screenshot, logger);
+      await showScreenshot(page, mergedOptions.screenshot, logger);
       if (attempt > 1) {
         await setTimeout(1000 * mergedOptions.challengeTimeoutSeconds!);
       }
@@ -91,11 +92,58 @@ export async function authenticate(
   return await page.$(selector);
 }
 
+async function saveImage(data: string): Promise<void> {
+  const timestamp = new Date(Date.now()).toISOString().replace(':', '-');
+  const path = `continue-with-google-${timestamp}.png`;
+  const buffer = Buffer.from(data, 'base64');
+  await writeFile(path, buffer);
+}
+
+async function showScreenshot(
+  page: Page,
+  mode: string | undefined,
+  logger: Logger
+): Promise<void> {
+  if (mode === 'log') {
+    const content = await takeContent(page, logger);
+    if (content) logger.info(content);
+  } else if (mode === 'file') {
+    const image = await takeImage(page, logger);
+    if (image) await saveImage(image);
+  }
+}
+
+async function takeContent(
+  page: Page,
+  logger: Logger
+): Promise<string | undefined> {
+  try {
+    return await page.evaluate(() => document.body.innerText);
+  } catch (error) {
+    logger.warn(`Failed to take the content (${error}).`);
+    return undefined;
+  }
+}
+
+async function takeImage(
+  page: Page,
+  logger: Logger
+): Promise<string | undefined> {
+  try {
+    const content = '* { caret-color: transparent !important; }';
+    await page.addStyleTag({ content });
+    return await page.screenshot({ encoding: 'base64' });
+  } catch (error) {
+    logger.warn(`Failed to take a screenshot (${error}).`);
+    return undefined;
+  }
+}
+
 async function waitForTrial(
   page: Page,
   attemptCount: number,
   attemptTimeoutSeconds: number,
-  screenshot: boolean | string | undefined,
+  screenshot: string | undefined,
   logger: Logger
 ): Promise<void> {
   for (
@@ -105,43 +153,15 @@ async function waitForTrial(
   ) {
     if (attempt > 0) {
       logger.warn(`Tried on attempt ${attempt}. Waiting to finish...`);
-      await takeScreenshotToDisplay(page, screenshot, logger);
+      await showScreenshot(page, screenshot, logger);
     }
     if (attempt > -1) {
       await setTimeout(1000 * attemptTimeoutSeconds);
     }
-    const future = await takeScreenshotToCompare(page);
+    const future = await takeImage(page, logger);
     if (future) {
       previous = current;
       current = future;
     }
-  }
-}
-
-async function takeScreenshotToCompare(
-  page: Page
-): Promise<string | undefined> {
-  try {
-    const content = '* { caret-color: transparent !important; }';
-    await page.addStyleTag({ content });
-    return await page.screenshot({ encoding: 'base64' });
-  } catch {
-    return undefined;
-  }
-}
-
-async function takeScreenshotToDisplay(
-  page: Page,
-  mode: boolean | string | undefined,
-  logger: Logger
-): Promise<void> {
-  const timestamp = new Date(Date.now()).toISOString();
-  if (mode === 'log') {
-    const content = await page.evaluate(() => document.body.innerText);
-    logger.info(`${timestamp}:\n${content}\n`);
-  } else if (mode) {
-    const path = `continue-with-google-${timestamp.replace(':', '-')}.png`;
-    // @ts-ignore
-    await page.screenshot({ path });
   }
 }
