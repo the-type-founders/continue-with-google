@@ -12,7 +12,7 @@ export type Options = {
   challengeTimeoutSeconds?: number;
   trialCount?: number;
   trialTimeoutSeconds?: number;
-  screenshot?: boolean;
+  screenshot?: boolean | string;
   waitForSelector?: WaitForSelectorOptions;
 };
 
@@ -35,20 +35,20 @@ export async function authenticate(
   const mergedOptions = { ...DEFAULTS, ...options };
 
   logger.info('Waiting to enter the email...');
-  if (mergedOptions.screenshot) await takeScreenshotToDisplay(page);
+  await takeScreenshotToDisplay(page, mergedOptions.screenshot, logger);
   await page.waitForSelector('input[type=email]', { visible: true });
 
   logger.info('Entering the email...');
-  if (mergedOptions.screenshot) await takeScreenshotToDisplay(page);
+  await takeScreenshotToDisplay(page, mergedOptions.screenshot, logger);
   await page.type('input[type=email]', email);
   await page.keyboard.press('Enter');
 
   logger.info('Waiting to enter the password...');
-  if (mergedOptions.screenshot) await takeScreenshotToDisplay(page);
+  await takeScreenshotToDisplay(page, mergedOptions.screenshot, logger);
   await page.waitForSelector('input[type=password]', { visible: true });
 
   logger.info('Entering the password...');
-  if (mergedOptions.screenshot) await takeScreenshotToDisplay(page);
+  await takeScreenshotToDisplay(page, mergedOptions.screenshot, logger);
   await page.type('input[type=password]', password);
   await page.keyboard.press('Enter');
 
@@ -59,7 +59,7 @@ export async function authenticate(
   ) {
     if (attempt > 0) {
       logger.warn(`Challenged on attempt ${attempt}. Entering the code...`);
-      if (mergedOptions.screenshot) await takeScreenshotToDisplay(page);
+      await takeScreenshotToDisplay(page, mergedOptions.screenshot, logger);
       if (attempt > 1) {
         await setTimeout(1000 * mergedOptions.challengeTimeoutSeconds!);
       }
@@ -95,7 +95,7 @@ async function waitForTrial(
   page: Page,
   attemptCount: number,
   attemptTimeoutSeconds: number,
-  screenshot: boolean | undefined,
+  screenshot: boolean | string | undefined,
   logger: Logger
 ): Promise<void> {
   for (
@@ -105,7 +105,7 @@ async function waitForTrial(
   ) {
     if (attempt > 0) {
       logger.warn(`Tried on attempt ${attempt}. Waiting to finish...`);
-      if (screenshot) await takeScreenshotToDisplay(page);
+      await takeScreenshotToDisplay(page, screenshot, logger);
     }
     if (attempt > -1) {
       await setTimeout(1000 * attemptTimeoutSeconds);
@@ -130,8 +130,18 @@ async function takeScreenshotToCompare(
   }
 }
 
-async function takeScreenshotToDisplay(page: Page): Promise<void> {
-  await page.screenshot({
-    path: `continue-with-google-${Date.now()}.png`,
-  });
+async function takeScreenshotToDisplay(
+  page: Page,
+  mode: boolean | string | undefined,
+  logger: Logger
+): Promise<void> {
+  const timestamp = new Date(Date.now()).toISOString();
+  if (mode === 'log') {
+    const content = await page.evaluate(() => document.body.innerText);
+    logger.info(`${timestamp}:\n${content}\n`);
+  } else if (mode) {
+    const path = `continue-with-google-${timestamp.replace(':', '-')}.png`;
+    // @ts-ignore
+    await page.screenshot({ path });
+  }
 }
