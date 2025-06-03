@@ -93,7 +93,7 @@ export async function authenticate(
 }
 
 async function saveImage(data: string): Promise<void> {
-  const timestamp = new Date(Date.now()).toISOString().replace(':', '-');
+  const timestamp = new Date(Date.now()).toISOString().replaceAll(':', '-');
   const path = `continue-with-google-${timestamp}.png`;
   const buffer = Buffer.from(data, 'base64');
   await writeFile(path, buffer);
