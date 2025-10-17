@@ -4,8 +4,9 @@ import { setTimeout } from 'node:timers/promises';
 import { type ElementHandle, Page, WaitForSelectorOptions } from 'puppeteer';
 
 export interface Logger {
-  info(message: string): void;
-  warn(message: string): void;
+  info(value: any): void;
+  warn(value: any): void;
+  error(value: any): void;
 }
 
 export type Options = {
@@ -119,8 +120,8 @@ async function takeContent(
 ): Promise<string | undefined> {
   try {
     return await page.evaluate(() => document.body.innerText);
-  } catch (error) {
-    logger.warn(`Failed to take the content (${error}).`);
+  } catch (cause) {
+    logger.error(new Error(`failed to take the content`, { cause }));
     return undefined;
   }
 }
@@ -133,8 +134,8 @@ async function takeImage(
     const content = '* { caret-color: transparent !important; }';
     await page.addStyleTag({ content });
     return await page.screenshot({ encoding: 'base64' });
-  } catch (error) {
-    logger.warn(`Failed to take a screenshot (${error}).`);
+  } catch (cause) {
+    logger.error(new Error(`failed to take a screenshot`, { cause }));
     return undefined;
   }
 }
