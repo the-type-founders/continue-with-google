@@ -9,7 +9,6 @@ import { authenticate } from '../src/index.js';
 test('authenticate', { timeout: 5 * 60 * 1000 }, async () => {
   PuppeteerExtra.use(StealthPlugin());
   const browser = await PuppeteerExtra.launch({
-    headless: false,
     args: ['--no-sandbox'],
     slowMo: parseInt(process.env.PUPPETEER_SLOW_MOTION || '100'),
   });
