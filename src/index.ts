@@ -25,6 +25,8 @@ const DEFAULTS: Options = {
   trialTimeoutSeconds: 2,
 };
 
+export class CaptchaError extends Error {}
+
 export async function authenticate(
   page: Page,
   email: string,
@@ -47,7 +49,17 @@ export async function authenticate(
 
   logger.info('Waiting to enter the password...');
   await showScreenshot(page, mergedOptions.screenshot, logger);
-  await page.waitForSelector('input[type=password]', { visible: true });
+  const captcha = await Promise.any([
+    page
+      .waitForSelector('input[type=password]', { visible: true })
+      .then(() => false),
+    page
+      .waitForSelector('input[type=text]', { visible: true })
+      .then(() => true),
+  ]);
+  if (captcha) {
+    throw new CaptchaError('failed to proceed due to CAPTCHA');
+  }
 
   logger.info('Entering the password...');
   await showScreenshot(page, mergedOptions.screenshot, logger);
