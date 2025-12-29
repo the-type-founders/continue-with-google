@@ -6,7 +6,7 @@
   "description": "Two-factor authentication with Google via Puppeteer",
   "repository": {
     "type": "git",
-    "url": "https://github.com/the-type-founders/continue-with-google.git"
+    "url": "git+https://github.com/the-type-founders/continue-with-google.git"
   },
   "type": "module",
   "main": "dist/index.js",
