@@ -30,3 +30,10 @@ await page.click('...');
 // Finalize the authorization flow and wait for a selector after redirection.
 const element = await authenticate(page, email, password, secret, selector);
 ```
+
+## Maintenance
+
+The logic relies on specific selectors for Google's sign-in screens (the email,
+password, CAPTCHA, and verification-code fields). Google's sign-in flow is a
+living organism: its layout and markup change without notice, which means these
+selectors will inevitably break and have to be updated periodically.

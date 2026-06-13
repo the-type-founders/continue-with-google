@@ -25,6 +25,15 @@ const DEFAULTS: Options = {
   trialTimeoutSeconds: 2,
 };
 
+// Each selector lists the current layout first and the previous one as a
+// fallback; as observed on June 11, 2026, the email field switched from
+// type=email to type=text but kept its id, and the CAPTCHA field is matched by
+// either its id or name.
+const EMAIL_SELECTOR = 'input#identifierId, input[type=email]';
+const PASSWORD_SELECTOR = 'input[type=password]';
+const CAPTCHA_SELECTOR = 'input#ca, input[name=ca]';
+const CODE_SELECTOR = 'input[type=tel]';
+
 export class CaptchaError extends Error {}
 
 export async function authenticate(
@@ -40,22 +49,20 @@ export async function authenticate(
 
   logger.info('Waiting to enter the email...');
   await showScreenshot(page, mergedOptions.screenshot, logger);
-  await page.waitForSelector('input[type=email]', { visible: true });
+  await page.waitForSelector(EMAIL_SELECTOR, { visible: true });
 
   logger.info('Entering the email...');
   await showScreenshot(page, mergedOptions.screenshot, logger);
-  await page.type('input[type=email]', email);
+  await page.type(EMAIL_SELECTOR, email);
   await page.keyboard.press('Enter');
 
   logger.info('Waiting to enter the password...');
   await showScreenshot(page, mergedOptions.screenshot, logger);
   const captcha = await Promise.any([
     page
-      .waitForSelector('input[type=password]', { visible: true })
+      .waitForSelector(PASSWORD_SELECTOR, { visible: true })
       .then(() => false),
-    page
-      .waitForSelector('input[type=text]', { visible: true })
-      .then(() => true),
+    page.waitForSelector(CAPTCHA_SELECTOR, { visible: true }).then(() => true),
   ]);
   if (captcha) {
     throw new CaptchaError('failed to proceed due to CAPTCHA');
@@ -63,7 +70,7 @@ export async function authenticate(
 
   logger.info('Entering the password...');
   await showScreenshot(page, mergedOptions.screenshot, logger);
-  await page.type('input[type=password]', password);
+  await page.type(PASSWORD_SELECTOR, password);
   await page.keyboard.press('Enter');
 
   for (
@@ -78,11 +85,11 @@ export async function authenticate(
         await setTimeout(1000 * mergedOptions.challengeTimeoutSeconds!);
       }
       const code = generateToken(secret);
-      await page.evaluate(() => {
-        const field = document.querySelector('input[type=tel]');
+      await page.evaluate((query) => {
+        const field = document.querySelector(query);
         (field as HTMLInputElement)?.setAttribute('value', '');
-      });
-      await page.type('input[type=tel]', code);
+      }, CODE_SELECTOR);
+      await page.type(CODE_SELECTOR, code);
       await page.keyboard.press('Enter');
       await waitForTrial(
         page,
@@ -96,9 +103,7 @@ export async function authenticate(
       page
         .waitForSelector(selector, mergedOptions.waitForSelector)
         .then(() => true),
-      page
-        .waitForSelector('input[type=tel]', { visible: true })
-        .then(() => false),
+      page.waitForSelector(CODE_SELECTOR, { visible: true }).then(() => false),
     ]);
   }
 
