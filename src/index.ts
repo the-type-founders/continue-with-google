@@ -65,6 +65,7 @@ export async function authenticate(
     page.waitForSelector(CAPTCHA_SELECTOR, { visible: true }).then(() => true),
   ]);
   if (captcha) {
+    await showScreenshot(page, mergedOptions.screenshot, logger);
     throw new CaptchaError('failed to proceed due to CAPTCHA');
   }
 
