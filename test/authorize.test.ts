@@ -24,7 +24,7 @@ test('authorize', { timeout: 5 * 60 * 1000 }, async () => {
   PuppeteerExtra.use(StealthPlugin());
   const browser = await PuppeteerExtra.launch({
     args: ['--no-sandbox'],
-    slowMo: parseInt(process.env.PUPPETEER_SLOW_MOTION || '100'),
+    slowMo: 100,
   });
   try {
     const page = await browser.newPage();
