@@ -1,4 +1,4 @@
-import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
+import { CodeChallengeMethod } from 'google-auth-library';
 import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { type Page } from 'puppeteer';
@@ -8,7 +8,7 @@ import {
   type UserCredentials,
   authenticate,
 } from './authenticate.js';
-import { type Logger } from './index.js';
+import { Client, type Logger } from './index.js';
 
 export type ClientCredentials = {
   id: string;
@@ -25,8 +25,8 @@ export async function authorize(
   page: Page,
   options: Options = {},
   logger: Logger = console
-): Promise<OAuth2Client> {
-  const client = new OAuth2Client(
+): Promise<Client> {
+  const client = new Client(
     clientCredentials.id,
     clientCredentials.secret,
     clientCredentials.redirectUri
