@@ -46,14 +46,14 @@ import { refresh } from '@thetypefounders/continue-with-google/refresh.js';
 
 const clientCredentials = {
   id,
-  secret: '...', // OAuth client secret.
+  secret: clientSecret,
   redirectUri,
   scopes,
 };
 const userCredentials = {
   email,
   password,
-  secret: '...', // TOTP secret.
+  secret: userSecret,
 };
 ```
 
