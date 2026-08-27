@@ -4,7 +4,13 @@ import PuppeteerExtra from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { test } from 'vitest';
 
-import { authenticate } from '../src/authenticate.js';
+import { type UserCredentials, authenticate } from '../src/authenticate.js';
+
+const userCredentials: UserCredentials = {
+  email: process.env.GOOGLE_USER_EMAIL!,
+  password: process.env.GOOGLE_USER_PASSWORD!,
+  secret: process.env.GOOGLE_USER_SECRET!,
+};
 
 test('authenticate', { timeout: 5 * 60 * 1000 }, async () => {
   PuppeteerExtra.use(StealthPlugin());
@@ -17,16 +23,9 @@ test('authenticate', { timeout: 5 * 60 * 1000 }, async () => {
     await page.setViewport({ width: 1280, height: 800 });
     await page.goto('https://mail.google.com');
     await assert.doesNotReject(
-      authenticate(
-        {
-          email: process.env.GOOGLE_USER_EMAIL!,
-          password: process.env.GOOGLE_USER_PASSWORD!,
-          secret: process.env.GOOGLE_USER_SECRET!,
-        },
-        page,
-        '[aria-label="Search mail"]',
-        { screenshot: 'log' }
-      )
+      authenticate(userCredentials, page, '[aria-label="Search mail"]', {
+        screenshot: 'log',
+      })
     );
   } finally {
     await browser.close();
