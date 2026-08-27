@@ -22,7 +22,8 @@ test('authenticate', { timeout: 5 * 60 * 1000 }, async () => {
         process.env.GOOGLE_USER_EMAIL!,
         process.env.GOOGLE_USER_PASSWORD!,
         process.env.GOOGLE_USER_SECRET!,
-        '[aria-label="Search mail"]'
+        '[aria-label="Search mail"]',
+        { screenshot: 'log' }
       )
     );
   } finally {
