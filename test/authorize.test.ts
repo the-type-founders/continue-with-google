@@ -36,6 +36,7 @@ test('authorize', { timeout: 5 * 60 * 1000 }, async () => {
     });
 
     assert.ok(client.credentials.access_token);
+    assert.ok(client.credentials.refresh_token);
   } finally {
     await browser.close();
   }

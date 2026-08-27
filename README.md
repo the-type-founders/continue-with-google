@@ -65,8 +65,8 @@ const client = await refresh(clientCredentials, refreshToken);
 
 To obtain a refresh token, provide a Puppeteer page. The package opens Google's
 authorization page, signs the user in, handles consent, waits for the OAuth
-callback, and returns the authorization together with the refresh token obtained
-from Google.
+callback, and returns a client whose credentials contain the refresh token
+obtained from Google.
 
 ```javascript
 const browser = await Puppeteer.launch();
