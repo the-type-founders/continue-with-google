@@ -1,16 +1,16 @@
 import { OAuth2Client } from 'google-auth-library';
 
-import { type Client } from './authorize.js';
+import { type ClientCredentials } from './authorize.js';
 
 export async function refresh(
-  client: Client,
+  clientCredentials: ClientCredentials,
   token: string
 ): Promise<OAuth2Client> {
-  const oauthClient = new OAuth2Client(
-    client.id,
-    client.secret,
-    client.redirectUri
+  const client = new OAuth2Client(
+    clientCredentials.id,
+    clientCredentials.secret,
+    clientCredentials.redirectUri
   );
-  oauthClient.setCredentials({ refresh_token: token });
-  return oauthClient;
+  client.setCredentials({ refresh_token: token });
+  return client;
 }

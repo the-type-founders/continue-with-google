@@ -4,9 +4,9 @@ import PuppeteerExtra from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { test } from 'vitest';
 
-import { type Client, authorize } from '../src/authorize.js';
+import { type ClientCredentials, authorize } from '../src/authorize.js';
 
-const client: Client = {
+const clientCredentials: ClientCredentials = {
   id: process.env.GOOGLE_CLIENT_ID!,
   secret: process.env.GOOGLE_CLIENT_SECRET!,
   redirectUri: process.env.GOOGLE_CLIENT_REDIRECT_URI!,
@@ -22,8 +22,8 @@ test('authorize', { timeout: 5 * 60 * 1000 }, async () => {
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 800, height: 1000 });
-    const oauthClient = await authorize(
-      client,
+    const client = await authorize(
+      clientCredentials,
       {
         email: process.env.GOOGLE_USER_EMAIL!,
         password: process.env.GOOGLE_USER_PASSWORD!,
@@ -37,7 +37,7 @@ test('authorize', { timeout: 5 * 60 * 1000 }, async () => {
       }
     );
 
-    assert.ok(oauthClient.credentials.access_token);
+    assert.ok(client.credentials.access_token);
   } finally {
     await browser.close();
   }

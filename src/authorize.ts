@@ -3,10 +3,14 @@ import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { type Page } from 'puppeteer';
 
-import { type Options, type User, authenticate } from './authenticate.js';
+import {
+  type Options,
+  type UserCredentials,
+  authenticate,
+} from './authenticate.js';
 import { type Logger } from './index.js';
 
-export type Client = {
+export type ClientCredentials = {
   id: string;
   secret: string;
   redirectUri: string;
@@ -16,29 +20,29 @@ export type Client = {
 const CONSENT_SELECTOR = '#submit_approve_access, ::-p-aria(Continue)';
 
 export async function authorize(
-  client: Client,
-  user: User,
+  clientCredentials: ClientCredentials,
+  userCredentials: UserCredentials,
   page: Page,
   options: Options = {},
   logger: Logger = console
 ): Promise<OAuth2Client> {
-  const oauthClient = new OAuth2Client(
-    client.id,
-    client.secret,
-    client.redirectUri
+  const client = new OAuth2Client(
+    clientCredentials.id,
+    clientCredentials.secret,
+    clientCredentials.redirectUri
   );
 
-  const redirectUri = new URL(client.redirectUri);
+  const redirectUri = new URL(clientCredentials.redirectUri);
   const state = randomBytes(32).toString('base64url');
   const { codeChallenge, codeVerifier } =
-    await oauthClient.generateCodeVerifierAsync();
-  const url = oauthClient.generateAuthUrl({
+    await client.generateCodeVerifierAsync();
+  const url = client.generateAuthUrl({
     access_type: 'offline',
     code_challenge: codeChallenge,
     code_challenge_method: CodeChallengeMethod.S256,
     hl: 'en',
     prompt: 'consent',
-    scope: client.scopes,
+    scope: clientCredentials.scopes,
     state,
   });
 
@@ -47,13 +51,13 @@ export async function authorize(
     state,
     page,
     url,
-    user,
+    userCredentials,
     options,
     logger
   );
-  const { tokens } = await oauthClient.getToken({ code, codeVerifier });
-  oauthClient.setCredentials(tokens);
-  return oauthClient;
+  const { tokens } = await client.getToken({ code, codeVerifier });
+  client.setCredentials(tokens);
+  return client;
 }
 
 async function requestCode(
@@ -61,7 +65,7 @@ async function requestCode(
   state: string,
   page: Page,
   url: string,
-  user: User,
+  userCredentials: UserCredentials,
   options: Options,
   logger: Logger
 ): Promise<string> {
@@ -97,7 +101,7 @@ async function requestCode(
       try {
         await page.goto(url);
         const consent = await authenticate(
-          user,
+          userCredentials,
           page,
           CONSENT_SELECTOR,
           options,

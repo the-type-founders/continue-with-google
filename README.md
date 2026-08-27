@@ -29,8 +29,8 @@ await page.waitForSelector('...');
 await page.click('...');
 
 // Finish signing in and wait for a selector after redirection.
-const user = { email, password, secret };
-const element = await authenticate(user, page, selector);
+const userCredentials = { email, password, secret };
+const element = await authenticate(userCredentials, page, selector);
 ```
 
 ## API authorization
@@ -44,13 +44,13 @@ The redirect URI must be an HTTP loopback address, such as
 import { authorize } from '@thetypefounders/continue-with-google/authorize.js';
 import { refresh } from '@thetypefounders/continue-with-google/refresh.js';
 
-const client = {
+const clientCredentials = {
   id,
   secret: '...', // OAuth client secret.
   redirectUri,
   scopes,
 };
-const user = {
+const userCredentials = {
   email,
   password,
   secret: '...', // TOTP secret.
@@ -60,7 +60,7 @@ const user = {
 When the user already has a refresh token, use it without a browser:
 
 ```javascript
-const oauthClient = await refresh(client, refreshToken);
+const client = await refresh(clientCredentials, refreshToken);
 ```
 
 To obtain a refresh token, provide a Puppeteer page. The package opens Google's
@@ -71,8 +71,8 @@ from Google.
 ```javascript
 const browser = await Puppeteer.launch();
 const page = await browser.newPage();
-const oauthClient = await authorize(client, user, page);
-const refreshToken = oauthClient.credentials.refresh_token ?? null;
+const client = await authorize(clientCredentials, userCredentials, page);
+const refreshToken = client.credentials.refresh_token ?? null;
 ```
 
 If `refreshToken` is not `null`, store it securely and pass it to `refresh` on

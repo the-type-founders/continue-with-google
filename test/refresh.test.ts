@@ -2,10 +2,10 @@ import 'dotenv/config';
 import assert from 'node:assert';
 import { test } from 'vitest';
 
-import { type Client } from '../src/authorize.js';
+import { type ClientCredentials } from '../src/authorize.js';
 import { refresh } from '../src/refresh.js';
 
-const client: Client = {
+const clientCredentials: ClientCredentials = {
   id: process.env.GOOGLE_CLIENT_ID!,
   secret: process.env.GOOGLE_CLIENT_SECRET!,
   redirectUri: process.env.GOOGLE_CLIENT_REDIRECT_URI!,
@@ -13,8 +13,11 @@ const client: Client = {
 };
 
 test('refresh', async () => {
-  const oauthClient = await refresh(client, process.env.GOOGLE_REFRESH_TOKEN!);
-  const { token } = await oauthClient.getAccessToken();
+  const client = await refresh(
+    clientCredentials,
+    process.env.GOOGLE_REFRESH_TOKEN!
+  );
+  const { token } = await client.getAccessToken();
 
   assert.ok(token);
 });

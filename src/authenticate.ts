@@ -18,7 +18,7 @@ export type Options = {
   waitForSelector?: WaitForSelectorOptions;
 };
 
-export type User = {
+export type UserCredentials = {
   email: string;
   password: string;
   secret: string;
@@ -43,7 +43,7 @@ const CODE_SELECTOR = 'input[type=tel]';
 export class CaptchaError extends Error {}
 
 export async function authenticate(
-  user: User,
+  userCredentials: UserCredentials,
   page: Page,
   selector: string,
   options: Options = DEFAULTS,
@@ -57,7 +57,7 @@ export async function authenticate(
 
   logger.info('Entering the email...');
   await showScreenshot(page, mergedOptions.screenshot, logger);
-  await page.type(EMAIL_SELECTOR, user.email);
+  await page.type(EMAIL_SELECTOR, userCredentials.email);
   await page.keyboard.press('Enter');
 
   logger.info('Waiting to enter the password...');
@@ -74,7 +74,7 @@ export async function authenticate(
 
   logger.info('Entering the password...');
   await showScreenshot(page, mergedOptions.screenshot, logger);
-  await page.type(PASSWORD_SELECTOR, user.password);
+  await page.type(PASSWORD_SELECTOR, userCredentials.password);
   await page.keyboard.press('Enter');
 
   for (
@@ -88,7 +88,7 @@ export async function authenticate(
       if (attempt > 1) {
         await setTimeout(1000 * mergedOptions.challengeTimeoutSeconds!);
       }
-      const code = generateToken(user.secret);
+      const code = generateToken(userCredentials.secret);
       await page.evaluate((query) => {
         const field = document.querySelector(query);
         (field as HTMLInputElement)?.setAttribute('value', '');
