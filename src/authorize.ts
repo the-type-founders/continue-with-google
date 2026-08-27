@@ -1,0 +1,116 @@
+import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
+import { randomBytes } from 'node:crypto';
+import { createServer } from 'node:http';
+import { type Page } from 'puppeteer';
+
+import { type Options, type User, authenticate } from './authenticate.js';
+import { type Logger } from './index.js';
+
+export type Client = {
+  id: string;
+  secret: string;
+  redirectUri: string;
+  scopes: readonly string[];
+};
+
+const CONSENT_SELECTOR = '#submit_approve_access, ::-p-aria(Continue)';
+
+export async function authorize(
+  client: Client,
+  user: User,
+  page: Page,
+  options: Options = {},
+  logger: Logger = console
+): Promise<OAuth2Client> {
+  const oauthClient = new OAuth2Client(
+    client.id,
+    client.secret,
+    client.redirectUri
+  );
+
+  const redirectUri = new URL(client.redirectUri);
+  const state = randomBytes(32).toString('base64url');
+  const { codeChallenge, codeVerifier } =
+    await oauthClient.generateCodeVerifierAsync();
+  const url = oauthClient.generateAuthUrl({
+    access_type: 'offline',
+    code_challenge: codeChallenge,
+    code_challenge_method: CodeChallengeMethod.S256,
+    hl: 'en',
+    prompt: 'consent',
+    scope: [...client.scopes],
+    state,
+  });
+
+  const code = await requestCode(
+    redirectUri,
+    state,
+    page,
+    url,
+    user,
+    options,
+    logger
+  );
+  const { tokens } = await oauthClient.getToken({ code, codeVerifier });
+  oauthClient.setCredentials(tokens);
+  return oauthClient;
+}
+
+async function requestCode(
+  redirectUri: URL,
+  state: string,
+  page: Page,
+  url: string,
+  user: User,
+  options: Options,
+  logger: Logger
+): Promise<string> {
+  return await new Promise((resolve, reject) => {
+    const server = createServer((request, response) => {
+      try {
+        const callback = new URL(request.url || '/', redirectUri);
+        if (callback.searchParams.get('state') !== state) {
+          throw new Error('found an invalid state');
+        }
+        const error = callback.searchParams.get('error');
+        if (error) {
+          throw new Error(`failed to authorize due to ${error}`);
+        }
+        const code = callback.searchParams.get('code');
+        if (!code) {
+          throw new Error('found no authorization code');
+        }
+        response.end();
+        resolve(code);
+      } catch (cause) {
+        response.writeHead(400).end();
+        reject(cause);
+      } finally {
+        server.close();
+      }
+    });
+    server.once('error', reject);
+
+    const host = redirectUri.hostname.replace(/^\[(.*)\]$/, '$1');
+    const port = parseInt(redirectUri.port || '80');
+    server.listen(port, host, async () => {
+      try {
+        await page.goto(url);
+        const consent = await authenticate(
+          user,
+          page,
+          CONSENT_SELECTOR,
+          options,
+          logger
+        );
+        if (!consent) {
+          throw new Error('failed to reach the consent screen');
+        }
+        await consent.click();
+      } catch (cause) {
+        server.close();
+        reject(cause);
+      }
+    });
+  });
+}

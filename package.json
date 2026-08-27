@@ -1,9 +1,9 @@
 {
   "name": "@thetypefounders/continue-with-google",
-  "version": "1.7.1",
+  "version": "2.0.0",
   "license": "Apache-2.0",
   "author": "Ivan Ukhov <ivan.ukhov@gmail.com>",
-  "description": "Two-factor authentication with Google via Puppeteer",
+  "description": "Browser authentication and API authorization with Google",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/the-type-founders/continue-with-google.git"
@@ -11,8 +11,27 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./authenticate.js": {
+      "types": "./dist/authenticate.d.ts",
+      "default": "./dist/authenticate.js"
+    },
+    "./authorize.js": {
+      "types": "./dist/authorize.d.ts",
+      "default": "./dist/authorize.js"
+    },
+    "./refresh.js": {
+      "types": "./dist/refresh.d.ts",
+      "default": "./dist/refresh.js"
+    }
+  },
   "dependencies": {
     "authenticator": "^1.1.5",
+    "google-auth-library": "^11.0.2",
     "puppeteer": "^25.9.0"
   },
   "devDependencies": {
@@ -31,6 +50,6 @@
     "check": "prettier . --check",
     "format": "prettier . --check --write",
     "prepublish": "tsc",
-    "test": "vitest --bail=1"
+    "test": "vitest --bail=1 --no-file-parallelism"
   }
 }
