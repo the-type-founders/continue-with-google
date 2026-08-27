@@ -12,7 +12,7 @@ const client: Client = {
   scopes: ['openid'],
 };
 
-test('refresh with a refresh token', async () => {
+test('refresh', async () => {
   const oauthClient = await refresh(client, process.env.GOOGLE_REFRESH_TOKEN!);
   const { token } = await oauthClient.getAccessToken();
 

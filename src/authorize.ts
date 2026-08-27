@@ -10,7 +10,7 @@ export type Client = {
   id: string;
   secret: string;
   redirectUri: string;
-  scopes: readonly string[];
+  scopes: string[];
 };
 
 const CONSENT_SELECTOR = '#submit_approve_access, ::-p-aria(Continue)';
@@ -38,7 +38,7 @@ export async function authorize(
     code_challenge_method: CodeChallengeMethod.S256,
     hl: 'en',
     prompt: 'consent',
-    scope: [...client.scopes],
+    scope: client.scopes,
     state,
   });
 
